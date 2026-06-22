@@ -56,6 +56,12 @@ class Game:
         self.game_over = False
         self.engine_playing = False
 
+        # Sistema de input de nome (top 10)
+        self.entering_name = False
+        self.player_name = ""
+        self.name_saved = False
+        self.is_top_score = False
+
         # Sistema de biomas dinâmicos
         self.biome_timer = 0
         self.current_biome = random.choice(BIOMES)
@@ -76,12 +82,10 @@ class Game:
         self.font_hud = pygame.font.SysFont("Lucida Sans Typewriter", 20)
         self.font_big = pygame.font.SysFont("Lucida Sans Typewriter", 48, bold=True)
         self.font_medium = pygame.font.SysFont("Lucida Sans Typewriter", 28, bold=True)
+        self.font_input = pygame.font.SysFont("Lucida Sans Typewriter", 32)
 
     def _calc_dodge_target(self, level):
-        """Calcula quantos desvios são necessários para passar o nível atual.
-        Fórmula: base + (nível - 1) * incremento
-        Ex: Nível 1 = 8, Nível 2 = 12, Nível 3 = 16, Nível 4 = 20...
-        """
+        """Calcula quantos desvios são necessários para passar o nível atual."""
         return LEVEL_BASE_DODGES + (level - 1) * LEVEL_DODGE_INCREMENT
 
     def run(self):
@@ -94,9 +98,6 @@ class Game:
         # Quando sair do loop
         self.sound_manager.stop_sfx('engine')
         self.sound_manager.stop_music()
-        if self.game_over:
-            db = Database()
-            db.add_record("Jogador", self.score, self.level, self.difficulty_name)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -105,11 +106,57 @@ class Game:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
+                # Se está digitando o nome
+                if self.entering_name:
+                    self._handle_name_input(event)
+                    return
+
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
-                if self.game_over:
+                if self.game_over and self.name_saved:
                     if event.key == pygame.K_r or event.key == pygame.K_RETURN:
                         self._restart()
+
+    def _handle_name_input(self, event):
+        """Gerencia a digitação do nome do jogador."""
+        if event.key == pygame.K_RETURN:
+            # Confirmar nome
+            if len(self.player_name) > 0:
+                db = Database()
+                db.add_record(self.player_name, self.score, self.level, self.difficulty_name)
+                self.entering_name = False
+                self.name_saved = True
+        elif event.key == pygame.K_BACKSPACE:
+            # Apagar último caractere
+            self.player_name = self.player_name[:-1]
+        elif event.key == pygame.K_ESCAPE:
+            # Cancelar (salva como "???")
+            db = Database()
+            db.add_record("???", self.score, self.level, self.difficulty_name)
+            self.entering_name = False
+            self.name_saved = True
+        else:
+            # Adicionar caractere (máximo 8)
+            if len(self.player_name) < 8 and event.unicode.isprintable() and event.unicode != '':
+                self.player_name += event.unicode.upper()
+
+    def _trigger_game_over(self):
+        """Ativa o game over e verifica se entrou no top 10."""
+        self.sound_manager.stop_sfx('engine')
+        self.engine_playing = False
+        self.sound_manager.stop_music()
+        self.sound_manager.play_sfx('game_over')
+        self.game_over = True
+
+        # Verificar se entrou no top 10
+        db = Database()
+        if db.is_top_score(self.score):
+            self.is_top_score = True
+            self.entering_name = True
+            self.player_name = ""
+        else:
+            self.is_top_score = False
+            self.name_saved = True  # Não precisa salvar nome
 
     def _restart(self):
         self.player = Player()
@@ -128,6 +175,12 @@ class Game:
         self.road_offset = 0
         self.game_over = False
         self.engine_playing = False
+
+        # Reset nome
+        self.entering_name = False
+        self.player_name = ""
+        self.name_saved = False
+        self.is_top_score = False
 
         # Reset bioma
         self.biome_timer = 0
@@ -155,8 +208,7 @@ class Game:
         return max(MIN_SPAWN_INTERVAL, interval)
 
     def _get_simultaneous_spawns(self):
-        """Retorna quantos carros podem spawnar ao mesmo tempo baseado no nível.
-        Progressão gradual: quanto maior o nível, mais carros simultâneos."""
+        """Retorna quantos carros podem spawnar ao mesmo tempo baseado no nível."""
         if self.level <= 2:
             return 1
         elif self.level <= 4:
@@ -168,7 +220,6 @@ class Game:
         elif self.level <= 10:
             return random.choice([2, 2, 3, 3])
         else:
-            # Nível 11+: até 4 carros simultâneos (máximo = NUM_LANES)
             return random.choice([2, 3, 3, min(4, NUM_LANES)])
 
     def _lerp_color(self, color1, color2, t):
@@ -224,13 +275,12 @@ class Game:
         # Atualizar sistema de biomas
         self._update_biome()
 
-        # Spawn de inimigos (com múltiplos spawns por vez em níveis altos)
+        # Spawn de inimigos
         self.spawn_timer += 1
         if self.spawn_timer >= self._get_spawn_interval():
             self.spawn_timer = 0
             num_spawns = self._get_simultaneous_spawns()
 
-            # Evitar spawnar na mesma faixa ao mesmo tempo
             available_lanes = list(range(NUM_LANES))
             for _ in range(min(num_spawns, len(available_lanes))):
                 if not available_lanes:
@@ -238,7 +288,6 @@ class Game:
                 lane_idx = random.choice(available_lanes)
                 available_lanes.remove(lane_idx)
                 enemy_speed = self._get_enemy_speed()
-                # Variação de velocidade entre carros (mais caótico em níveis altos)
                 variation_range = min(2.0, 0.5 + self.level * 0.15)
                 speed_variation = random.uniform(-0.5, variation_range)
                 enemy = Enemy(LANE_CENTERS[lane_idx], -PLAYER_HEIGHT, enemy_speed + speed_variation)
@@ -271,11 +320,7 @@ class Game:
             self.lives -= 1
             self.sound_manager.play_sfx('crash')
             if self.lives <= 0:
-                self.sound_manager.stop_sfx('engine')
-                self.engine_playing = False
-                self.sound_manager.stop_music()
-                self.sound_manager.play_sfx('game_over')
-                self.game_over = True
+                self._trigger_game_over()
                 return
 
         # Verificar inimigos que passaram (dodge)
@@ -287,7 +332,7 @@ class Game:
                 self.score += points
                 self.sound_manager.play_sfx('dodge')
 
-        # Verificar progressão de nível (INFINITO - nunca termina!)
+        # Verificar progressão de nível (INFINITO)
         if self.dodged >= self.dodge_target:
             self.level += 1
             self.dodged = 0
@@ -298,21 +343,17 @@ class Game:
         self.road_offset = (self.road_offset + self.player.get_speed()) % 80
 
     def draw_background(self):
-        # Cor da vegetação/lateral (dinâmica por bioma)
         grass_color = self._get_current_color('grass_color')
         self.window.fill(grass_color)
 
-        # Cor do asfalto (dinâmica por bioma)
         road_color = self._get_current_color('road_color')
         road_rect = pygame.Rect(ROAD_LEFT - 10, 0, ROAD_RIGHT - ROAD_LEFT + 20, WINDOW_HEIGHT)
         pygame.draw.rect(self.window, road_color, road_rect)
 
-        # Bordas da estrada (dinâmica por bioma)
         border_color = self._get_current_color('border_color')
         pygame.draw.rect(self.window, border_color, (ROAD_LEFT - 5, 0, 5, WINDOW_HEIGHT))
         pygame.draw.rect(self.window, border_color, (ROAD_RIGHT, 0, 5, WINDOW_HEIGHT))
 
-        # Faixas da estrada (cor e estilo dinâmicos por bioma)
         lane_color = self._get_current_color('lane_color')
         lane_style = self._get_current_lane_style()
 
@@ -340,12 +381,10 @@ class Game:
             self.window.blit(text, (10, y))
             y += 22
 
-        # Dificuldade no canto superior direito
         diff_text = self.font_hud.render(self.difficulty_name, True, C_YELLOW)
         diff_rect = diff_text.get_rect(topright=(WINDOW_WIDTH - 10, 10))
         self.window.blit(diff_text, diff_rect)
 
-        # Nome do bioma atual (canto inferior direito)
         biome_name = self.current_biome['name']
         if self.transitioning and self.next_biome:
             biome_name = f"{self.current_biome['name']} > {self.next_biome['name']}"
@@ -353,20 +392,81 @@ class Game:
         biome_rect = biome_text.get_rect(bottomright=(WINDOW_WIDTH - 10, WINDOW_HEIGHT - 10))
         self.window.blit(biome_text, biome_rect)
 
-    def draw_centered_texts(self, lines):
-        """Desenha textos centralizados (para Game Over)."""
+    def draw_name_input(self):
+        """Desenha a tela de input do nome do jogador."""
+        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        overlay.fill(C_BLACK)
+        overlay.set_alpha(200)
+        self.window.blit(overlay, (0, 0))
+
+        # Título
+        title = self.font_big.render("TOP 10!", True, C_YELLOW)
+        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 150))
+        self.window.blit(title, title_rect)
+
+        # Pontuação
+        score_text = self.font_medium.render(f"Pontuacao: {self.score}", True, C_WHITE)
+        score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, 220))
+        self.window.blit(score_text, score_rect)
+
+        # Instrução
+        instr = self.font_hud.render("Digite seu nome (max 8 caracteres):", True, C_WHITE)
+        instr_rect = instr.get_rect(center=(WINDOW_WIDTH // 2, 290))
+        self.window.blit(instr, instr_rect)
+
+        # Campo de input com cursor piscante
+        name_display = self.player_name
+        # Cursor piscante
+        if pygame.time.get_ticks() % 1000 < 500:
+            name_display += "_"
+
+        # Caixa de input
+        input_box = pygame.Rect(WINDOW_WIDTH // 2 - 150, 320, 300, 50)
+        pygame.draw.rect(self.window, C_DARK_GRAY, input_box)
+        pygame.draw.rect(self.window, C_WHITE, input_box, 2)
+
+        name_surf = self.font_input.render(name_display, True, C_YELLOW)
+        name_rect = name_surf.get_rect(center=input_box.center)
+        self.window.blit(name_surf, name_rect)
+
+        # Contador de caracteres
+        counter = self.font_hud.render(f"{len(self.player_name)}/8", True, C_GRAY)
+        counter_rect = counter.get_rect(center=(WINDOW_WIDTH // 2, 390))
+        self.window.blit(counter, counter_rect)
+
+        # Instrução de confirmação
+        confirm = self.font_hud.render("ENTER para confirmar | ESC para pular", True, C_GRAY)
+        confirm_rect = confirm.get_rect(center=(WINDOW_WIDTH // 2, 440))
+        self.window.blit(confirm, confirm_rect)
+
+    def draw_game_over(self):
+        """Desenha a tela de game over (após salvar o nome)."""
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         overlay.fill(C_BLACK)
         overlay.set_alpha(180)
         self.window.blit(overlay, (0, 0))
 
-        total_h = len(lines) * 50
+        lines = [
+            ("GAME OVER", C_RED, self.font_big),
+            (f"Pontuacao: {self.score}", C_WHITE, self.font_medium),
+            (f"Nivel alcancado: {self.level}", C_YELLOW, self.font_hud),
+        ]
+
+        if self.is_top_score and self.player_name:
+            lines.append((f"Parabens, {self.player_name}! Top 10!", C_GREEN, self.font_hud))
+
+        lines.append(("", C_BLACK, self.font_hud))
+        lines.append(("Pressione R ou ENTER para reiniciar", C_WHITE, self.font_hud))
+        lines.append(("Pressione ESC para sair", C_GRAY, self.font_hud))
+
+        total_h = len(lines) * 45
         start_y = (WINDOW_HEIGHT - total_h) // 2
 
         for i, (text, color, font) in enumerate(lines):
-            surf = font.render(text, True, color)
-            rect = surf.get_rect(center=(WINDOW_WIDTH // 2, start_y + i * 50))
-            self.window.blit(surf, rect)
+            if text:
+                surf = font.render(text, True, color)
+                rect = surf.get_rect(center=(WINDOW_WIDTH // 2, start_y + i * 45))
+                self.window.blit(surf, rect)
 
     def draw(self):
         self.draw_background()
@@ -380,13 +480,11 @@ class Game:
         self.draw_hud()
 
         if self.game_over:
-            self.draw_centered_texts([
-                ("GAME OVER", C_RED, self.font_big),
-                (f"Pontuacao: {self.score}", C_WHITE, self.font_hud),
-                (f"Nivel alcancado: {self.level}", C_YELLOW, self.font_medium),
-                (f"Carros desviados: {(self.level - 1) * LEVEL_BASE_DODGES + self.dodged}", C_WHITE, self.font_hud),
-                ("Pressione R ou ENTER para reiniciar", C_WHITE, self.font_hud),
-                ("Pressione ESC para sair", C_GRAY, self.font_hud),
-            ])
+            if self.entering_name:
+                # Tela de input do nome
+                self.draw_name_input()
+            elif self.name_saved:
+                # Tela de game over final
+                self.draw_game_over()
 
         pygame.display.flip()
