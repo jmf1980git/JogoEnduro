@@ -8,9 +8,23 @@
   },
   {
     "name": "Jogador",
+    "score": 585,
+    "level": 4,
+    "difficulty": "Normal",
+    "date": "22/06/2026 17:24"
+  },
+  {
+    "name": "Jogador",
     "score": 300,
     "level": 2,
     "difficulty": "Extremo",
     "date": "22/06/2026 16:07"
+  },
+  {
+    "name": "Jogador",
+    "score": 70,
+    "level": 2,
+    "difficulty": "Fácil",
+    "date": "22/06/2026 17:22"
   }
 ]

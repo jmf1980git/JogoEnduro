@@ -1,4 +1,5 @@
 import pygame
+import os
 from code.Const import (
     WINDOW_WIDTH, WINDOW_HEIGHT,
     ROAD_LEFT, ROAD_RIGHT,
@@ -8,21 +9,25 @@ from code.Const import (
 
 
 class Player(pygame.sprite.Sprite):
+    PICTURE_PATH = './asset/picture/'
+
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((PLAYER_WIDTH, PLAYER_HEIGHT))
-        self.image.fill((30, 144, 255))  # Azul dodger blue
 
-        # Faróis dianteiros (amarelo claro)
-        pygame.draw.rect(self.image, (255, 255, 200), (8, 5, 12, 15))
-        pygame.draw.rect(self.image, (255, 255, 200), (30, 5, 12, 15))
-
-        # Para-brisa (cinza claro)
-        pygame.draw.rect(self.image, (200, 200, 200), (10, 30, 30, 20))
-
-        # Farol traseiro (vermelho) - detalhe
-        pygame.draw.rect(self.image, (255, 50, 50), (8, 72, 12, 8))
-        pygame.draw.rect(self.image, (255, 50, 50), (30, 72, 12, 8))
+        # Tenta carregar imagem do carro, senão desenha programaticamente
+        img_path = os.path.join(self.PICTURE_PATH, 'player_car.png')
+        if os.path.exists(img_path):
+            self.image = pygame.image.load(img_path).convert_alpha()
+            self.image = pygame.transform.scale(self.image, (PLAYER_WIDTH, PLAYER_HEIGHT))
+        else:
+            # Fallback: desenho programático (caso a imagem não exista)
+            self.image = pygame.Surface((PLAYER_WIDTH, PLAYER_HEIGHT))
+            self.image.fill((30, 144, 255))
+            pygame.draw.rect(self.image, (255, 255, 200), (8, 5, 12, 15))
+            pygame.draw.rect(self.image, (255, 255, 200), (30, 5, 12, 15))
+            pygame.draw.rect(self.image, (200, 200, 200), (10, 30, 30, 20))
+            pygame.draw.rect(self.image, (255, 50, 50), (8, 72, 12, 8))
+            pygame.draw.rect(self.image, (255, 50, 50), (30, 72, 12, 8))
 
         self.rect = self.image.get_rect()
         self.rect.centerx = WINDOW_WIDTH // 2
