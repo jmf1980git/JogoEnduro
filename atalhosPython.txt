@@ -1,0 +1,19 @@
+1. Comentário de Linha (Mais comum)
+Adiciona // (ou o equivalente da linguagem) no início de cada linha selecionada.
+ Para desfazer, basta usar o mesmo atalho.
+
+Windows / Linux: Ctrl + / (ou Ctrl + ; em alguns teclados padrão ABNT2)
+
+macOS: Cmd ⌘ + /
+
+2. Comentário de Bloco
+Envolve o trecho selecionado com /* e */ (ou o equivalente da linguagem). Útil se você 
+quiser comentar apenas uma parte específica de uma linha ou um bloco inteiro de uma vez.
+
+Windows / Linux: Shift + Alt + A
+
+macOS: Shift + Option ⌥ + A
+
+Dica: Se o Ctrl + / não estiver funcionando no seu teclado ABNT2, tente usar Ctrl + ; ou
+ verifique se o teclado numérico está ativado. Você também pode personalizar esse atalho 
+ apertando Ctrl + K e depois Ctrl + S para abrir as configurações de atalhos de teclado.
