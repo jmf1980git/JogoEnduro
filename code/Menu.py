@@ -16,6 +16,7 @@ class Menu:
             self.surf.fill((0, 0, 0))
 
         self.rect = self.surf.get_rect(left=0, top=0)
+        self.clock = pygame.time.Clock()
         self.font_title = pygame.font.SysFont("Lucida Sans Typewriter", 60, bold=True)
         self.font_menu = pygame.font.SysFont("Lucida Sans Typewriter", 28)
         self.font_small = pygame.font.SysFont("Lucida Sans Typewriter", 18)
@@ -27,6 +28,7 @@ class Menu:
         self.sound_manager.start_menu_music()
 
         while True:
+            self.clock.tick(60)
             self.window.blit(self.surf, self.rect)
 
             # Título
@@ -92,6 +94,7 @@ class Menu:
         """Tela de seleção de dificuldade."""
         option = 0
         while True:
+            self.clock.tick(60)
             self.window.blit(self.surf, self.rect)
 
             title = self.font_menu.render("SELECIONE A DIFICULDADE", True, C_YELLOW)
@@ -138,6 +141,7 @@ class Menu:
         from code.Const import DIFFICULTY_OPTIONS
 
         while True:
+            self.clock.tick(60)
             self.window.blit(self.surf, self.rect)
 
             title = self.font_menu.render("DIFICULDADES", True, C_ORANGE)
@@ -176,6 +180,7 @@ class Menu:
         records = db.get_top10()
 
         while True:
+            self.clock.tick(60)
             self.window.blit(self.surf, self.rect)
 
             # Título
