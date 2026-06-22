@@ -9,7 +9,7 @@ from code.Const import (
     ENEMY_BASE_SPEED, ENEMY_SPAWN_INTERVAL,
     LEVEL_ENEMY_COUNTS, DIFFICULTY_OPTIONS, DIFFICULTY_NAMES,
     POINTS_PER_ENEMY, PLAYER_LIVES,
-    BIOMES, BIOME_CHANGE_INTERVAL,
+    ROAD_COLOR, ROAD_BORDER_COLOR, ROAD_LANE_COLOR, GRASS_COLOR,
     SCENERY_SPAWN_INTERVAL
 )
 from code.Player import Player
@@ -54,14 +54,6 @@ class Game:
         self.game_over = False
         self.victory = False
         self.engine_playing = False
-
-        # Sistema de biomas dinâmicos
-        self.biome_timer = 0
-        self.current_biome = random.choice(BIOMES)
-        self.next_biome = None
-        self.transitioning = False
-        self.transition_progress = 0.0
-        self.transition_speed = 0.02  # Velocidade da transição (suave)
 
         # Parar música do menu e iniciar música do jogo
         self.sound_manager.stop_music()
@@ -121,13 +113,6 @@ class Game:
         self.victory = False
         self.engine_playing = False
 
-        # Reset bioma
-        self.biome_timer = 0
-        self.current_biome = random.choice(BIOMES)
-        self.next_biome = None
-        self.transitioning = False
-        self.transition_progress = 0.0
-
         # Reiniciar música e som do motor
         self.sound_manager.stop_music()
         self.sound_manager.start_game_music()
@@ -144,62 +129,12 @@ class Game:
         interval -= (self.level - 1) * 5
         return max(20, interval)
 
-    def _lerp_color(self, color1, color2, t):
-        """Interpola entre duas cores (transição suave)."""
-        r = int(color1[0] + (color2[0] - color1[0]) * t)
-        g = int(color1[1] + (color2[1] - color1[1]) * t)
-        b = int(color1[2] + (color2[2] - color1[2]) * t)
-        return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
-
-    def _update_biome(self):
-        """Gerencia a troca dinâmica de biomas."""
-        self.biome_timer += 1
-
-        if self.transitioning:
-            # Avançar a transição suavemente
-            self.transition_progress += self.transition_speed
-            if self.transition_progress >= 1.0:
-                self.transition_progress = 1.0
-                self.current_biome = self.next_biome
-                self.next_biome = None
-                self.transitioning = False
-                self.biome_timer = 0
-        else:
-            # Verificar se é hora de trocar de bioma
-            if self.biome_timer >= BIOME_CHANGE_INTERVAL:
-                # Escolher um bioma diferente do atual
-                available = [b for b in BIOMES if b['name'] != self.current_biome['name']]
-                self.next_biome = random.choice(available)
-                self.transitioning = True
-                self.transition_progress = 0.0
-
-    def _get_current_color(self, color_key):
-        """Retorna a cor atual considerando a transição entre biomas."""
-        if self.transitioning and self.next_biome:
-            return self._lerp_color(
-                self.current_biome[color_key],
-                self.next_biome[color_key],
-                self.transition_progress
-            )
-        return self.current_biome[color_key]
-
-    def _get_current_lane_style(self):
-        """Retorna o estilo de faixa atual."""
-        if self.transitioning and self.next_biome:
-            # Na metade da transição, troca o estilo
-            if self.transition_progress >= 0.5:
-                return self.next_biome['lane_style']
-        return self.current_biome['lane_style']
-
     def update(self):
         if self.game_over or self.victory:
             return
 
         keys = pygame.key.get_pressed()
         self.player.update(keys)
-
-        # Atualizar sistema de biomas
-        self._update_biome()
 
         # Spawn de inimigos
         self.spawn_timer += 1
@@ -215,6 +150,7 @@ class Game:
         self.scenery_timer += 1
         if self.scenery_timer >= SCENERY_SPAWN_INTERVAL:
             self.scenery_timer = 0
+            # Spawnar em um lado aleatório (ou ambos)
             side = random.choice(['left', 'right'])
             scenery_obj = Scenery(side, self.player.get_speed())
             self.scenery_objects.add(scenery_obj)
@@ -272,35 +208,23 @@ class Game:
         self.road_offset = (self.road_offset + self.player.get_speed()) % 80
 
     def draw_background(self):
-        # Cor da vegetação/lateral (dinâmica por bioma)
-        grass_color = self._get_current_color('grass_color')
-        self.window.fill(grass_color)
+        # Grama / lateral (cor customizável)
+        self.window.fill(GRASS_COLOR)
 
-        # Cor do asfalto (dinâmica por bioma)
-        road_color = self._get_current_color('road_color')
+        # Estrada (cor customizável)
         road_rect = pygame.Rect(ROAD_LEFT - 10, 0, ROAD_RIGHT - ROAD_LEFT + 20, WINDOW_HEIGHT)
-        pygame.draw.rect(self.window, road_color, road_rect)
+        pygame.draw.rect(self.window, ROAD_COLOR, road_rect)
 
-        # Bordas da estrada (dinâmica por bioma)
-        border_color = self._get_current_color('border_color')
-        pygame.draw.rect(self.window, border_color, (ROAD_LEFT - 5, 0, 5, WINDOW_HEIGHT))
-        pygame.draw.rect(self.window, border_color, (ROAD_RIGHT, 0, 5, WINDOW_HEIGHT))
+        # Bordas da estrada (cor customizável)
+        pygame.draw.rect(self.window, ROAD_BORDER_COLOR, (ROAD_LEFT - 5, 0, 5, WINDOW_HEIGHT))
+        pygame.draw.rect(self.window, ROAD_BORDER_COLOR, (ROAD_RIGHT, 0, 5, WINDOW_HEIGHT))
 
-        # Faixas da estrada (cor e estilo dinâmicos por bioma)
-        lane_color = self._get_current_color('lane_color')
-        lane_style = self._get_current_lane_style()
-
+        # Linhas pontilhadas das faixas (cor customizável)
         for lane in range(1, NUM_LANES):
             x = ROAD_LEFT + lane * LANE_WIDTH - 2
-
-            if lane_style == 'dashed':
-                # Faixa tracejada (pontilhada)
-                for y in range(-40, WINDOW_HEIGHT, 80):
-                    y_pos = y + self.road_offset
-                    pygame.draw.rect(self.window, lane_color, (x, y_pos, 4, 40))
-            else:
-                # Faixa contínua (sólida)
-                pygame.draw.rect(self.window, lane_color, (x, 0, 4, WINDOW_HEIGHT))
+            for y in range(-40, WINDOW_HEIGHT, 80):
+                y_pos = y + self.road_offset
+                pygame.draw.rect(self.window, ROAD_LANE_COLOR, (x, y_pos, 4, 40))
 
     def draw_hud(self):
         hud_lines = [
@@ -320,14 +244,6 @@ class Game:
         diff_text = self.font_hud.render(self.difficulty_name, True, C_YELLOW)
         diff_rect = diff_text.get_rect(topright=(WINDOW_WIDTH - 10, 10))
         self.window.blit(diff_text, diff_rect)
-
-        # Nome do bioma atual (canto inferior direito)
-        biome_name = self.current_biome['name']
-        if self.transitioning and self.next_biome:
-            biome_name = f"{self.current_biome['name']} > {self.next_biome['name']}"
-        biome_text = self.font_hud.render(biome_name, True, C_WHITE)
-        biome_rect = biome_text.get_rect(bottomright=(WINDOW_WIDTH - 10, WINDOW_HEIGHT - 10))
-        self.window.blit(biome_text, biome_rect)
 
     def draw_centered_texts(self, lines):
         """Desenha textos centralizados (para Game Over / Vitoria)."""

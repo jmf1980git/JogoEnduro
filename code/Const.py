@@ -60,14 +60,77 @@ LANE_CENTERS = [
     ROAD_LEFT + LANE_WIDTH * 2.5,
 ]
 
-# --- CORES DA ESTRADA (customize aqui!) ---
-ROAD_COLOR = (50, 50, 50)          # Cor do asfalto (cinza escuro)
-ROAD_BORDER_COLOR = (255, 255, 0)  # Cor das bordas da estrada (amarelo)
-ROAD_LANE_COLOR = (255, 255, 255)  # Cor das faixas pontilhadas (branco)
-GRASS_COLOR = (34, 139, 34)        # Cor da grama/lateral (verde)
+# ============================================================
+# SEÇÃO 6 - BIOMAS / TRECHOS DINÂMICOS
+# ============================================================
+# Cada bioma define: cor da vegetação, cor do asfalto, cor das bordas,
+# cor das faixas, estilo das faixas ('dashed' ou 'solid'), nome do bioma.
+# O jogo alterna aleatoriamente entre eles conforme o jogador avança.
+
+BIOMES = [
+    {
+        'name': 'Floresta',
+        'grass_color': (34, 139, 34),       # Verde floresta
+        'road_color': (50, 50, 50),          # Asfalto escuro
+        'border_color': (255, 255, 0),       # Borda amarela
+        'lane_color': (255, 255, 255),       # Faixa branca
+        'lane_style': 'dashed',              # Tracejada
+    },
+    {
+        'name': 'Deserto',
+        'grass_color': (210, 180, 120),      # Areia
+        'road_color': (80, 70, 60),          # Asfalto mais claro (terra)
+        'border_color': (255, 255, 255),     # Borda branca
+        'lane_color': (255, 255, 0),         # Faixa amarela
+        'lane_style': 'solid',               # Contínua
+    },
+    {
+        'name': 'Estrada de Terra',
+        'grass_color': (107, 142, 35),       # Verde oliva
+        'road_color': (139, 90, 43),         # Terra/marrom
+        'border_color': (255, 255, 255),     # Borda branca
+        'lane_color': (255, 255, 200),       # Faixa creme
+        'lane_style': 'dashed',              # Tracejada
+    },
+    {
+        'name': 'Cidade',
+        'grass_color': (80, 80, 80),         # Calçada cinza
+        'road_color': (40, 40, 40),          # Asfalto bem escuro
+        'border_color': (255, 200, 0),       # Borda amarelo ouro
+        'lane_color': (255, 255, 255),       # Faixa branca
+        'lane_style': 'solid',               # Contínua
+    },
+    {
+        'name': 'Noturno',
+        'grass_color': (20, 50, 20),         # Verde muito escuro
+        'road_color': (30, 30, 30),          # Asfalto quase preto
+        'border_color': (255, 140, 0),       # Borda laranja
+        'lane_color': (255, 255, 0),         # Faixa amarela
+        'lane_style': 'dashed',              # Tracejada
+    },
+    {
+        'name': 'Neve',
+        'grass_color': (220, 230, 240),      # Branco azulado (neve)
+        'road_color': (100, 100, 110),       # Asfalto cinza claro
+        'border_color': (200, 200, 200),     # Borda cinza claro
+        'lane_color': (255, 255, 255),       # Faixa branca
+        'lane_style': 'solid',               # Contínua
+    },
+    {
+        'name': 'Campo',
+        'grass_color': (124, 185, 50),       # Verde claro (campo)
+        'road_color': (60, 60, 55),          # Asfalto médio
+        'border_color': (255, 255, 0),       # Borda amarela
+        'lane_color': (255, 255, 255),       # Faixa branca
+        'lane_style': 'dashed',              # Tracejada
+    },
+]
+
+# Intervalo em frames para trocar de bioma (quanto maior, mais tempo no mesmo bioma)
+BIOME_CHANGE_INTERVAL = 600  # ~10 segundos a 60 FPS
 
 # ============================================================
-# SEÇÃO 6 - DIFICULDADES
+# SEÇÃO 7 - DIFICULDADES
 # ============================================================
 DIFFICULTY_NAMES = ["Fácil", "Normal", "Difícil", "Extremo"]
 
@@ -80,23 +143,23 @@ DIFFICULTY_OPTIONS = [
 ]
 
 # ============================================================
-# SEÇÃO 7 - NÍVEIS
+# SEÇÃO 8 - NÍVEIS
 # ============================================================
 LEVEL_ENEMY_COUNTS = [5, 10, 15, 20, 25]
 
 # ============================================================
-# SEÇÃO 8 - CONFIGURAÇÕES GLOBAIS
+# SEÇÃO 9 - CONFIGURAÇÕES GLOBAIS
 # ============================================================
 PLAYER_LIVES = 3
 POINTS_PER_ENEMY = 10
 
 # ============================================================
-# SEÇÃO 9 - MENU
+# SEÇÃO 10 - MENU
 # ============================================================
 MENU_OPTION = ("JOGAR", "DIFICULDADE", "RECORDS", "SAIR")
 
 # ============================================================
-# SEÇÃO 10 - OBJETOS DE CENÁRIO (LATERAIS)
+# SEÇÃO 11 - OBJETOS DE CENÁRIO (LATERAIS)
 # ============================================================
 # Intervalo de frames entre spawns de objetos laterais
 SCENERY_SPAWN_INTERVAL = 45
@@ -112,18 +175,18 @@ SCENERY_OBJECTS = {
         'files': ['tree1.png', 'tree2.png', 'tree3.png'],
         'width': 40,
         'height': 60,
-        'fallback_color': (0, 100, 0),  # Verde escuro
+        'fallback_color': (0, 100, 0),
     },
     'person': {
         'files': ['person1.png', 'person2.png', 'person3.png'],
         'width': 25,
         'height': 50,
-        'fallback_color': (200, 150, 100),  # Bege
+        'fallback_color': (200, 150, 100),
     },
     'animal': {
         'files': ['animal1.png', 'animal2.png', 'animal3.png'],
         'width': 35,
         'height': 30,
-        'fallback_color': (139, 90, 43),  # Marrom
+        'fallback_color': (139, 90, 43),
     },
 }
