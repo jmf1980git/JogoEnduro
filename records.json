@@ -14,6 +14,13 @@
     "date": "22/06/2026 18:36"
   },
   {
+    "name": "JOHN",
+    "score": 1395,
+    "level": 6,
+    "difficulty": "Normal",
+    "date": "22/06/2026 19:01"
+  },
+  {
     "name": "Jogador",
     "score": 1080,
     "level": 6,
@@ -61,12 +68,5 @@
     "level": 4,
     "difficulty": "Normal",
     "date": "22/06/2026 18:55"
-  },
-  {
-    "name": "Jogador",
-    "score": 585,
-    "level": 4,
-    "difficulty": "Normal",
-    "date": "22/06/2026 17:24"
   }
 ]

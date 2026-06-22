@@ -1,6 +1,6 @@
 import pygame
 import sys
-from code.Const import WINDOW_WIDTH, WINDOW_HEIGHT, C_ORANGE, C_WHITE, C_YELLOW, C_RED, C_GREEN, C_BLUE, MENU_OPTION, DIFFICULTY_NAMES
+from code.Const import WINDOW_WIDTH, WINDOW_HEIGHT, C_ORANGE, C_WHITE, C_YELLOW, C_RED, C_GREEN, C_BLUE, C_GRAY, C_BLACK, MENU_OPTION, DIFFICULTY_NAMES
 
 
 class Menu:
@@ -19,6 +19,7 @@ class Menu:
         self.font_title = pygame.font.SysFont("Lucida Sans Typewriter", 60, bold=True)
         self.font_menu = pygame.font.SysFont("Lucida Sans Typewriter", 28)
         self.font_small = pygame.font.SysFont("Lucida Sans Typewriter", 18)
+        self.font_record = pygame.font.SysFont("Lucida Sans Typewriter", 16)
 
     def run(self):
         """Loop principal do menu. Retorna (acao, dificuldade)."""
@@ -44,7 +45,7 @@ class Menu:
                     self.window.blit(arrow, arr_rect)
                 self.window.blit(text, text_rect)
 
-            footer = self.font_small.render("↑↓ Navegar | ENTER Selecionar | ESC Sair", True, C_WHITE)
+            footer = self.font_small.render("Up/Down Navegar | ENTER Selecionar | ESC Sair", True, C_WHITE)
             footer_rect = footer.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 40))
             self.window.blit(footer, footer_rect)
 
@@ -109,7 +110,7 @@ class Menu:
                     self.window.blit(arrow, arr_rect)
                 self.window.blit(text, text_rect)
 
-            footer = self.font_small.render("↑↓ Navegar | ENTER Confirmar | ESC Voltar", True, C_WHITE)
+            footer = self.font_small.render("Up/Down Navegar | ENTER Confirmar | ESC Voltar", True, C_WHITE)
             footer_rect = footer.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 40))
             self.window.blit(footer, footer_rect)
 
@@ -168,35 +169,79 @@ class Menu:
                         return
 
     def _show_records(self):
-        """Mostra o TOP 5 records."""
+        """Mostra o TOP 10 records com nome, nível e pontos."""
         from code.Database import Database
 
         db = Database()
-        records = db.get_top5()
+        records = db.get_top10()
 
         while True:
             self.window.blit(self.surf, self.rect)
 
-            title = self.font_menu.render("TOP 5 RECORDS", True, C_YELLOW)
-            title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 60))
+            # Título
+            title = self.font_menu.render("TOP 10 RECORDS", True, C_YELLOW)
+            title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 50))
             self.window.blit(title, title_rect)
 
             if not records:
-                msg = self.font_small.render("Nenhum recorde ainda! Jogue e faça sua pontuação.", True, C_WHITE)
+                msg = self.font_small.render("Nenhum recorde ainda! Jogue e faca sua pontuacao.", True, C_WHITE)
                 msg_rect = msg.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
                 self.window.blit(msg, msg_rect)
             else:
-                header = self.font_small.render("Pos  Pontos  Nivel  Dificuldade     Data", True, C_YELLOW)
-                header_rect = header.get_rect(center=(WINDOW_WIDTH // 2, 110))
+                # Cabeçalho da tabela
+                header = self.font_record.render(
+                    f"{'POS':<4} {'NOME':<10} {'PONTOS':<8} {'NIVEL':<6} {'DIFIC.':<10} {'DATA':<14}",
+                    True, C_ORANGE
+                )
+                header_rect = header.get_rect(center=(WINDOW_WIDTH // 2, 100))
                 self.window.blit(header, header_rect)
 
-                diff_colors = {"Fácil": C_GREEN, "Normal": C_YELLOW, "Difícil": C_ORANGE, "Extremo": C_RED}
+                # Linha separadora
+                sep_y = 115
+                pygame.draw.line(self.window, C_GRAY,
+                                 (WINDOW_WIDTH // 2 - 300, sep_y),
+                                 (WINDOW_WIDTH // 2 + 300, sep_y), 1)
+
+                # Cores por posição
+                pos_colors = [
+                    C_YELLOW,   # 1o lugar - dourado
+                    (192, 192, 192),  # 2o lugar - prata
+                    (205, 127, 50),   # 3o lugar - bronze
+                ]
+
+                diff_colors = {
+                    "Fácil": C_GREEN,
+                    "Normal": C_YELLOW,
+                    "Difícil": C_ORANGE,
+                    "Extremo": C_RED
+                }
+
                 for i, rec in enumerate(records):
-                    color = diff_colors.get(rec.get('difficulty', 'Normal'), C_WHITE)
-                    line = f"{i+1:2d}   {rec.get('score', 0):<<5d}  {rec.get('level', 1):2d}     {rec.get('difficulty', '-'):<<12s} {rec.get('date', '')}"
-                    txt = self.font_small.render(line, True, color)
-                    txt_rect = txt.get_rect(center=(WINDOW_WIDTH // 2, 150 + 30 * i))
+                    # Cor baseada na posição (top 3 especial, resto branco)
+                    if i < 3:
+                        color = pos_colors[i]
+                    else:
+                        color = C_WHITE
+
+                    name = rec.get('name', '???')[:8]
+                    score = rec.get('score', 0)
+                    level = rec.get('level', 1)
+                    difficulty = rec.get('difficulty', '-')
+                    date = rec.get('date', '')
+
+                    # Formatar linha
+                    pos_str = f"{i + 1:>2}."
+                    line = f"{pos_str:<4} {name:<10} {score:<8} {level:<6} {difficulty:<10} {date:<14}"
+
+                    txt = self.font_record.render(line, True, color)
+                    txt_rect = txt.get_rect(center=(WINDOW_WIDTH // 2, 135 + 40 * i))
                     self.window.blit(txt, txt_rect)
+
+                # Linha separadora inferior
+                sep_y2 = 135 + 40 * len(records) + 10
+                pygame.draw.line(self.window, C_GRAY,
+                                 (WINDOW_WIDTH // 2 - 300, sep_y2),
+                                 (WINDOW_WIDTH // 2 + 300, sep_y2), 1)
 
             footer = self.font_small.render("ESC para voltar", True, C_WHITE)
             footer_rect = footer.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 30))
