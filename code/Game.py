@@ -6,9 +6,11 @@ from code.Const import (
     ROAD_LEFT, ROAD_RIGHT, LANE_WIDTH, LANE_CENTERS, NUM_LANES,
     C_WHITE, C_RED, C_YELLOW, C_GREEN, C_BLUE, C_ORANGE, C_BLACK, C_GRAY, C_DARK_GRAY,
     PLAYER_WIDTH, PLAYER_HEIGHT,
-    ENEMY_BASE_SPEED, ENEMY_SPAWN_INTERVAL,
-    LEVEL_ENEMY_COUNTS, DIFFICULTY_OPTIONS, DIFFICULTY_NAMES,
+    ENEMY_BASE_SPEED, ENEMY_SPAWN_INTERVAL, ENEMY_MAX_SPEED,
+    LEVEL_BASE_DODGES, LEVEL_DODGE_INCREMENT,
+    DIFFICULTY_OPTIONS, DIFFICULTY_NAMES,
     POINTS_PER_ENEMY, PLAYER_LIVES,
+    LEVEL_SPEED_INCREMENT, LEVEL_SPAWN_REDUCTION, MIN_SPAWN_INTERVAL,
     BIOMES, BIOME_CHANGE_INTERVAL,
     SCENERY_SPAWN_INTERVAL
 )
@@ -40,19 +42,18 @@ class Game:
         self.scenery_objects = pygame.sprite.Group()
         self.all_sprites.add(self.player)
 
-        # Estado do jogo
+        # Estado do jogo (FASES INFINITAS)
         self.score = 0
         self.lives = PLAYER_LIVES
         self.level = 1
         self.dodged = 0
-        self.dodge_target = LEVEL_ENEMY_COUNTS[0]
+        self.dodge_target = self._calc_dodge_target(1)
         self.spawn_timer = 0
-        self.spawn_interval = max(30, int(ENEMY_SPAWN_INTERVAL * self.diff['spawn_mult']))
+        self.spawn_interval = max(MIN_SPAWN_INTERVAL, int(ENEMY_SPAWN_INTERVAL * self.diff['spawn_mult']))
         self.scenery_timer = 0
         self.road_offset = 0
         self.running = True
         self.game_over = False
-        self.victory = False
         self.engine_playing = False
 
         # Sistema de biomas dinâmicos
@@ -61,7 +62,7 @@ class Game:
         self.next_biome = None
         self.transitioning = False
         self.transition_progress = 0.0
-        self.transition_speed = 0.02  # Velocidade da transição (suave)
+        self.transition_speed = 0.02
 
         # Parar música do menu e iniciar música do jogo
         self.sound_manager.stop_music()
@@ -74,6 +75,14 @@ class Game:
         # Fontes
         self.font_hud = pygame.font.SysFont("Lucida Sans Typewriter", 20)
         self.font_big = pygame.font.SysFont("Lucida Sans Typewriter", 48, bold=True)
+        self.font_medium = pygame.font.SysFont("Lucida Sans Typewriter", 28, bold=True)
+
+    def _calc_dodge_target(self, level):
+        """Calcula quantos desvios são necessários para passar o nível atual.
+        Fórmula: base + (nível - 1) * incremento
+        Ex: Nível 1 = 8, Nível 2 = 12, Nível 3 = 16, Nível 4 = 20...
+        """
+        return LEVEL_BASE_DODGES + (level - 1) * LEVEL_DODGE_INCREMENT
 
     def run(self):
         while self.running:
@@ -85,7 +94,7 @@ class Game:
         # Quando sair do loop
         self.sound_manager.stop_sfx('engine')
         self.sound_manager.stop_music()
-        if self.game_over or self.victory:
+        if self.game_over:
             db = Database()
             db.add_record("Jogador", self.score, self.level, self.difficulty_name)
 
@@ -98,7 +107,7 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
-                if self.game_over or self.victory:
+                if self.game_over:
                     if event.key == pygame.K_r or event.key == pygame.K_RETURN:
                         self._restart()
 
@@ -112,13 +121,12 @@ class Game:
         self.lives = PLAYER_LIVES
         self.level = 1
         self.dodged = 0
-        self.dodge_target = LEVEL_ENEMY_COUNTS[0]
+        self.dodge_target = self._calc_dodge_target(1)
         self.spawn_timer = 0
         self.scenery_timer = 0
-        self.spawn_interval = max(30, int(ENEMY_SPAWN_INTERVAL * self.diff['spawn_mult']))
+        self.spawn_interval = max(MIN_SPAWN_INTERVAL, int(ENEMY_SPAWN_INTERVAL * self.diff['spawn_mult']))
         self.road_offset = 0
         self.game_over = False
-        self.victory = False
         self.engine_playing = False
 
         # Reset bioma
@@ -135,14 +143,33 @@ class Game:
         self.engine_playing = True
 
     def _get_enemy_speed(self):
+        """Velocidade dos inimigos aumenta a cada nível, com teto máximo."""
         speed = ENEMY_BASE_SPEED * self.diff['enemy_speed_mult']
-        speed += (self.level - 1) * 0.5
-        return max(2, speed)
+        speed += (self.level - 1) * LEVEL_SPEED_INCREMENT
+        return min(ENEMY_MAX_SPEED, max(3, speed))
 
     def _get_spawn_interval(self):
+        """Intervalo entre spawns diminui a cada nível (mais carros)."""
         interval = int(ENEMY_SPAWN_INTERVAL * self.diff['spawn_mult'])
-        interval -= (self.level - 1) * 5
-        return max(20, interval)
+        interval -= (self.level - 1) * LEVEL_SPAWN_REDUCTION
+        return max(MIN_SPAWN_INTERVAL, interval)
+
+    def _get_simultaneous_spawns(self):
+        """Retorna quantos carros podem spawnar ao mesmo tempo baseado no nível.
+        Progressão gradual: quanto maior o nível, mais carros simultâneos."""
+        if self.level <= 2:
+            return 1
+        elif self.level <= 4:
+            return random.choice([1, 1, 2])
+        elif self.level <= 6:
+            return random.choice([1, 2, 2])
+        elif self.level <= 8:
+            return random.choice([1, 2, 2, 3])
+        elif self.level <= 10:
+            return random.choice([2, 2, 3, 3])
+        else:
+            # Nível 11+: até 4 carros simultâneos (máximo = NUM_LANES)
+            return random.choice([2, 3, 3, min(4, NUM_LANES)])
 
     def _lerp_color(self, color1, color2, t):
         """Interpola entre duas cores (transição suave)."""
@@ -156,7 +183,6 @@ class Game:
         self.biome_timer += 1
 
         if self.transitioning:
-            # Avançar a transição suavemente
             self.transition_progress += self.transition_speed
             if self.transition_progress >= 1.0:
                 self.transition_progress = 1.0
@@ -165,9 +191,7 @@ class Game:
                 self.transitioning = False
                 self.biome_timer = 0
         else:
-            # Verificar se é hora de trocar de bioma
             if self.biome_timer >= BIOME_CHANGE_INTERVAL:
-                # Escolher um bioma diferente do atual
                 available = [b for b in BIOMES if b['name'] != self.current_biome['name']]
                 self.next_biome = random.choice(available)
                 self.transitioning = True
@@ -186,13 +210,12 @@ class Game:
     def _get_current_lane_style(self):
         """Retorna o estilo de faixa atual."""
         if self.transitioning and self.next_biome:
-            # Na metade da transição, troca o estilo
             if self.transition_progress >= 0.5:
                 return self.next_biome['lane_style']
         return self.current_biome['lane_style']
 
     def update(self):
-        if self.game_over or self.victory:
+        if self.game_over:
             return
 
         keys = pygame.key.get_pressed()
@@ -201,15 +224,26 @@ class Game:
         # Atualizar sistema de biomas
         self._update_biome()
 
-        # Spawn de inimigos
+        # Spawn de inimigos (com múltiplos spawns por vez em níveis altos)
         self.spawn_timer += 1
         if self.spawn_timer >= self._get_spawn_interval():
             self.spawn_timer = 0
-            lane = random.randint(0, NUM_LANES - 1)
-            enemy_speed = self._get_enemy_speed()
-            enemy = Enemy(LANE_CENTERS[lane], -PLAYER_HEIGHT, enemy_speed)
-            self.enemies.add(enemy)
-            self.all_sprites.add(enemy)
+            num_spawns = self._get_simultaneous_spawns()
+
+            # Evitar spawnar na mesma faixa ao mesmo tempo
+            available_lanes = list(range(NUM_LANES))
+            for _ in range(min(num_spawns, len(available_lanes))):
+                if not available_lanes:
+                    break
+                lane_idx = random.choice(available_lanes)
+                available_lanes.remove(lane_idx)
+                enemy_speed = self._get_enemy_speed()
+                # Variação de velocidade entre carros (mais caótico em níveis altos)
+                variation_range = min(2.0, 0.5 + self.level * 0.15)
+                speed_variation = random.uniform(-0.5, variation_range)
+                enemy = Enemy(LANE_CENTERS[lane_idx], -PLAYER_HEIGHT, enemy_speed + speed_variation)
+                self.enemies.add(enemy)
+                self.all_sprites.add(enemy)
 
         # Spawn de objetos de cenário nas laterais
         self.scenery_timer += 1
@@ -219,7 +253,6 @@ class Game:
             scenery_obj = Scenery(side, self.player.get_speed())
             self.scenery_objects.add(scenery_obj)
 
-            # Chance de spawnar no outro lado também (30%)
             if random.random() < 0.3:
                 other_side = 'right' if side == 'left' else 'left'
                 scenery_obj2 = Scenery(other_side, self.player.get_speed())
@@ -254,18 +287,11 @@ class Game:
                 self.score += points
                 self.sound_manager.play_sfx('dodge')
 
-        # Verificar progressão de nível
+        # Verificar progressão de nível (INFINITO - nunca termina!)
         if self.dodged >= self.dodge_target:
             self.level += 1
-            if self.level > len(LEVEL_ENEMY_COUNTS):
-                self.sound_manager.play_sfx('victory')
-                self.sound_manager.stop_sfx('engine')
-                self.engine_playing = False
-                self.sound_manager.stop_music()
-                self.victory = True
-                return
             self.dodged = 0
-            self.dodge_target = LEVEL_ENEMY_COUNTS[self.level - 1]
+            self.dodge_target = self._calc_dodge_target(self.level)
             self.sound_manager.play_sfx('level_up')
 
         # Animação da estrada
@@ -294,12 +320,10 @@ class Game:
             x = ROAD_LEFT + lane * LANE_WIDTH - 2
 
             if lane_style == 'dashed':
-                # Faixa tracejada (pontilhada)
                 for y in range(-40, WINDOW_HEIGHT, 80):
                     y_pos = y + self.road_offset
                     pygame.draw.rect(self.window, lane_color, (x, y_pos, 4, 40))
             else:
-                # Faixa contínua (sólida)
                 pygame.draw.rect(self.window, lane_color, (x, 0, 4, WINDOW_HEIGHT))
 
     def draw_hud(self):
@@ -330,7 +354,7 @@ class Game:
         self.window.blit(biome_text, biome_rect)
 
     def draw_centered_texts(self, lines):
-        """Desenha textos centralizados (para Game Over / Vitoria)."""
+        """Desenha textos centralizados (para Game Over)."""
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         overlay.fill(C_BLACK)
         overlay.set_alpha(180)
@@ -359,13 +383,8 @@ class Game:
             self.draw_centered_texts([
                 ("GAME OVER", C_RED, self.font_big),
                 (f"Pontuacao: {self.score}", C_WHITE, self.font_hud),
-                ("Pressione R ou ENTER para reiniciar", C_WHITE, self.font_hud),
-                ("Pressione ESC para sair", C_GRAY, self.font_hud),
-            ])
-        elif self.victory:
-            self.draw_centered_texts([
-                ("VITORIA!", C_YELLOW, self.font_big),
-                (f"Pontuacao final: {self.score}", C_WHITE, self.font_hud),
+                (f"Nivel alcancado: {self.level}", C_YELLOW, self.font_medium),
+                (f"Carros desviados: {(self.level - 1) * LEVEL_BASE_DODGES + self.dodged}", C_WHITE, self.font_hud),
                 ("Pressione R ou ENTER para reiniciar", C_WHITE, self.font_hud),
                 ("Pressione ESC para sair", C_GRAY, self.font_hud),
             ])

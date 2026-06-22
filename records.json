@@ -1,6 +1,27 @@
 [
   {
     "name": "Jogador",
+    "score": 5075,
+    "level": 8,
+    "difficulty": "Difícil",
+    "date": "22/06/2026 18:33"
+  },
+  {
+    "name": "Jogador",
+    "score": 2190,
+    "level": 8,
+    "difficulty": "Normal",
+    "date": "22/06/2026 18:36"
+  },
+  {
+    "name": "Jogador",
+    "score": 1080,
+    "level": 6,
+    "difficulty": "Fácil",
+    "date": "22/06/2026 18:32"
+  },
+  {
+    "name": "Jogador",
     "score": 990,
     "level": 4,
     "difficulty": "Extremo",
@@ -8,10 +29,38 @@
   },
   {
     "name": "Jogador",
+    "score": 960,
+    "level": 3,
+    "difficulty": "Extremo",
+    "date": "22/06/2026 18:32"
+  },
+  {
+    "name": "Jogador",
+    "score": 855,
+    "level": 5,
+    "difficulty": "Normal",
+    "date": "22/06/2026 18:47"
+  },
+  {
+    "name": "Jogador",
     "score": 585,
     "level": 4,
     "difficulty": "Normal",
     "date": "22/06/2026 17:24"
+  },
+  {
+    "name": "Jogador",
+    "score": 575,
+    "level": 3,
+    "difficulty": "Difícil",
+    "date": "22/06/2026 18:48"
+  },
+  {
+    "name": "Jogador",
+    "score": 360,
+    "level": 3,
+    "difficulty": "Normal",
+    "date": "22/06/2026 18:44"
   },
   {
     "name": "Jogador",
@@ -26,6 +75,13 @@
     "level": 3,
     "difficulty": "Fácil",
     "date": "22/06/2026 18:10"
+  },
+  {
+    "name": "Jogador",
+    "score": 130,
+    "level": 2,
+    "difficulty": "Fácil",
+    "date": "22/06/2026 18:46"
   },
   {
     "name": "Jogador",
