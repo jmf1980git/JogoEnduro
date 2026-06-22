@@ -52,6 +52,11 @@ class Game:
 
         # Parar música do menu e iniciar música do jogo
         self.sound_manager.stop_music()
+        self.sound_manager.start_game_music()
+
+        # Iniciar som do motor automaticamente
+        self.sound_manager.play_sfx('engine', volume=0.3, loops=-1)
+        self.engine_playing = True
 
         # Fontes
         self.font_hud = pygame.font.SysFont("Lucida Sans Typewriter", 20)
@@ -65,6 +70,8 @@ class Game:
             self.draw()
 
         # Quando sair do loop
+        self.sound_manager.stop_sfx('engine')
+        self.sound_manager.stop_music()
         if self.game_over or self.victory:
             db = Database()
             db.add_record("Jogador", self.score, self.level, self.difficulty_name)
@@ -99,6 +106,12 @@ class Game:
         self.victory = False
         self.engine_playing = False
 
+        # Reiniciar música e som do motor
+        self.sound_manager.stop_music()
+        self.sound_manager.start_game_music()
+        self.sound_manager.play_sfx('engine', volume=0.3, loops=-1)
+        self.engine_playing = True
+
     def _get_enemy_speed(self):
         speed = ENEMY_BASE_SPEED * self.diff['enemy_speed_mult']
         speed += (self.level - 1) * 0.5
@@ -115,14 +128,6 @@ class Game:
 
         keys = pygame.key.get_pressed()
         self.player.update(keys)
-
-        # Gerenciar som do motor (loop)
-        if self.player.is_accelerating() and not self.engine_playing:
-            self.sound_manager.play_sfx('engine', volume=0.3, loops=-1)
-            self.engine_playing = True
-        elif not self.player.is_accelerating() and self.engine_playing:
-            self.sound_manager.stop_sfx('engine')
-            self.engine_playing = False
 
         # Spawn de inimigos
         self.spawn_timer += 1
@@ -142,9 +147,10 @@ class Game:
         if hits:
             self.lives -= 1
             self.sound_manager.play_sfx('crash')
-            self.sound_manager.stop_sfx('engine')
-            self.engine_playing = False
             if self.lives <= 0:
+                self.sound_manager.stop_sfx('engine')
+                self.engine_playing = False
+                self.sound_manager.stop_music()
                 self.sound_manager.play_sfx('game_over')
                 self.game_over = True
                 return
@@ -165,6 +171,7 @@ class Game:
                 self.sound_manager.play_sfx('victory')
                 self.sound_manager.stop_sfx('engine')
                 self.engine_playing = False
+                self.sound_manager.stop_music()
                 self.victory = True
                 return
             self.dodged = 0

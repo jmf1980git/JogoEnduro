@@ -5,5 +5,12 @@
     "level": 4,
     "difficulty": "Extremo",
     "date": "22/06/2026 15:14"
+  },
+  {
+    "name": "Jogador",
+    "score": 300,
+    "level": 2,
+    "difficulty": "Extremo",
+    "date": "22/06/2026 16:07"
   }
 ]
