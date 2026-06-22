@@ -8,13 +8,10 @@ from code.Const import (
     PLAYER_WIDTH, PLAYER_HEIGHT,
     ENEMY_BASE_SPEED, ENEMY_SPAWN_INTERVAL,
     LEVEL_ENEMY_COUNTS, DIFFICULTY_OPTIONS, DIFFICULTY_NAMES,
-    POINTS_PER_ENEMY, PLAYER_LIVES,
-    ROAD_COLOR, ROAD_BORDER_COLOR, ROAD_LANE_COLOR, GRASS_COLOR,
-    SCENERY_SPAWN_INTERVAL
+    POINTS_PER_ENEMY, PLAYER_LIVES
 )
 from code.Player import Player
 from code.Enemy import Enemy
-from code.Scenery import Scenery
 from code.Database import Database
 
 
@@ -37,7 +34,6 @@ class Game:
         self.player = Player()
         self.all_sprites = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
-        self.scenery_objects = pygame.sprite.Group()
         self.all_sprites.add(self.player)
 
         # Estado do jogo
@@ -48,7 +44,6 @@ class Game:
         self.dodge_target = LEVEL_ENEMY_COUNTS[0]
         self.spawn_timer = 0
         self.spawn_interval = max(30, int(ENEMY_SPAWN_INTERVAL * self.diff['spawn_mult']))
-        self.scenery_timer = 0
         self.road_offset = 0
         self.running = True
         self.game_over = False
@@ -98,7 +93,6 @@ class Game:
         self.player = Player()
         self.all_sprites = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
-        self.scenery_objects = pygame.sprite.Group()
         self.all_sprites.add(self.player)
         self.score = 0
         self.lives = PLAYER_LIVES
@@ -106,7 +100,6 @@ class Game:
         self.dodged = 0
         self.dodge_target = LEVEL_ENEMY_COUNTS[0]
         self.spawn_timer = 0
-        self.scenery_timer = 0
         self.spawn_interval = max(30, int(ENEMY_SPAWN_INTERVAL * self.diff['spawn_mult']))
         self.road_offset = 0
         self.game_over = False
@@ -146,27 +139,8 @@ class Game:
             self.enemies.add(enemy)
             self.all_sprites.add(enemy)
 
-        # Spawn de objetos de cenário nas laterais
-        self.scenery_timer += 1
-        if self.scenery_timer >= SCENERY_SPAWN_INTERVAL:
-            self.scenery_timer = 0
-            # Spawnar em um lado aleatório (ou ambos)
-            side = random.choice(['left', 'right'])
-            scenery_obj = Scenery(side, self.player.get_speed())
-            self.scenery_objects.add(scenery_obj)
-
-            # Chance de spawnar no outro lado também (30%)
-            if random.random() < 0.3:
-                other_side = 'right' if side == 'left' else 'left'
-                scenery_obj2 = Scenery(other_side, self.player.get_speed())
-                self.scenery_objects.add(scenery_obj2)
-
         # Atualizar inimigos
         self.enemies.update()
-
-        # Atualizar objetos de cenário
-        for obj in self.scenery_objects:
-            obj.update(self.player.get_speed())
 
         # Colisão
         hits = pygame.sprite.spritecollide(self.player, self.enemies, True)
@@ -208,23 +182,23 @@ class Game:
         self.road_offset = (self.road_offset + self.player.get_speed()) % 80
 
     def draw_background(self):
-        # Grama / lateral (cor customizável)
-        self.window.fill(GRASS_COLOR)
+        # Grama
+        self.window.fill(C_GREEN)
 
-        # Estrada (cor customizável)
+        # Estrada (cinza escuro)
         road_rect = pygame.Rect(ROAD_LEFT - 10, 0, ROAD_RIGHT - ROAD_LEFT + 20, WINDOW_HEIGHT)
-        pygame.draw.rect(self.window, ROAD_COLOR, road_rect)
+        pygame.draw.rect(self.window, C_DARK_GRAY, road_rect)
 
-        # Bordas da estrada (cor customizável)
-        pygame.draw.rect(self.window, ROAD_BORDER_COLOR, (ROAD_LEFT - 5, 0, 5, WINDOW_HEIGHT))
-        pygame.draw.rect(self.window, ROAD_BORDER_COLOR, (ROAD_RIGHT, 0, 5, WINDOW_HEIGHT))
+        # Bordas amarelas
+        pygame.draw.rect(self.window, C_YELLOW, (ROAD_LEFT - 5, 0, 5, WINDOW_HEIGHT))
+        pygame.draw.rect(self.window, C_YELLOW, (ROAD_RIGHT, 0, 5, WINDOW_HEIGHT))
 
-        # Linhas pontilhadas das faixas (cor customizável)
+        # Linhas pontilhadas (faixas)
         for lane in range(1, NUM_LANES):
             x = ROAD_LEFT + lane * LANE_WIDTH - 2
             for y in range(-40, WINDOW_HEIGHT, 80):
                 y_pos = y + self.road_offset
-                pygame.draw.rect(self.window, ROAD_LANE_COLOR, (x, y_pos, 4, 40))
+                pygame.draw.rect(self.window, C_WHITE, (x, y_pos, 4, 40))
 
     def draw_hud(self):
         hud_lines = [
@@ -262,13 +236,7 @@ class Game:
 
     def draw(self):
         self.draw_background()
-
-        # Desenhar objetos de cenário (atrás dos carros)
-        self.scenery_objects.draw(self.window)
-
-        # Desenhar carros (player e inimigos)
         self.all_sprites.draw(self.window)
-
         self.draw_hud()
 
         if self.game_over:

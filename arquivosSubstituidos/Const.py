@@ -37,13 +37,6 @@ ENEMY_HEIGHT = 80
 ENEMY_BASE_SPEED = 5
 ENEMY_SPAWN_INTERVAL = 90
 
-# Lista de arquivos de imagem dos carros inimigos (em asset/picture/)
-# Adicione quantos modelos quiser - o jogo escolhe aleatoriamente
-ENEMY_CAR_FILES = [
-    'enemy_car1.png',
-    'enemy_car2.png',
-]
-
 # ============================================================
 # SEÇÃO 5 - CONFIGURAÇÕES DA ESTRADA
 # ============================================================
@@ -59,12 +52,6 @@ LANE_CENTERS = [
     ROAD_LEFT + LANE_WIDTH * 1.5,
     ROAD_LEFT + LANE_WIDTH * 2.5,
 ]
-
-# --- CORES DA ESTRADA (customize aqui!) ---
-ROAD_COLOR = (50, 50, 50)          # Cor do asfalto (cinza escuro)
-ROAD_BORDER_COLOR = (255, 255, 0)  # Cor das bordas da estrada (amarelo)
-ROAD_LANE_COLOR = (255, 255, 255)  # Cor das faixas pontilhadas (branco)
-GRASS_COLOR = (34, 139, 34)        # Cor da grama/lateral (verde)
 
 # ============================================================
 # SEÇÃO 6 - DIFICULDADES
@@ -94,36 +81,3 @@ POINTS_PER_ENEMY = 10
 # SEÇÃO 9 - MENU
 # ============================================================
 MENU_OPTION = ("JOGAR", "DIFICULDADE", "RECORDS", "SAIR")
-
-# ============================================================
-# SEÇÃO 10 - OBJETOS DE CENÁRIO (LATERAIS)
-# ============================================================
-# Intervalo de frames entre spawns de objetos laterais
-SCENERY_SPAWN_INTERVAL = 45
-
-# Multiplicador de velocidade dos objetos laterais em relação ao player
-SCENERY_SPEED_MULT = 0.8
-
-# Configuração dos objetos de cenário
-# Para cada tipo, liste os arquivos de imagem (em asset/picture/)
-# Adicione quantas variações quiser - o jogo escolhe aleatoriamente
-SCENERY_OBJECTS = {
-    'tree': {
-        'files': ['tree1.png', 'tree2.png', 'tree3.png'],
-        'width': 40,
-        'height': 60,
-        'fallback_color': (0, 100, 0),  # Verde escuro
-    },
-    'person': {
-        'files': ['person1.png', 'person2.png', 'person3.png'],
-        'width': 25,
-        'height': 50,
-        'fallback_color': (200, 150, 100),  # Bege
-    },
-    'animal': {
-        'files': ['animal1.png', 'animal2.png', 'animal3.png'],
-        'width': 35,
-        'height': 30,
-        'fallback_color': (139, 90, 43),  # Marrom
-    },
-}
