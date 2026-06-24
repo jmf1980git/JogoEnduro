@@ -18,6 +18,7 @@ from code.Player import Player
 from code.Enemy import Enemy
 from code.Scenery import Scenery
 from code.Database import Database
+from code.Graphics import Graphics
 
 
 class Game:
@@ -25,6 +26,9 @@ class Game:
         self.window = window
         self.sound_manager = sound_manager
         self.clock = pygame.time.Clock()
+
+    # Adicione esta linha
+        self.graphics = Graphics()
 
         # Dificuldade: achar o índice pelo nome
         diff_index = 1
