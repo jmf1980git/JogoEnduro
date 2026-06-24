@@ -1,3 +1,9 @@
+"""
+Graphics.py - Sistema de Renderização do Jogo Enduro 2D
+Copie este arquivo para a pasta 'code/' do seu projeto
+Renomeie para 'Graphics.py' (sem o '_Corrigido_v2')
+"""
+
 import pygame
 from code.Const import (
     WINDOW_WIDTH, WINDOW_HEIGHT,
@@ -36,8 +42,8 @@ class Graphics:
         # Background preto
         pygame.draw.rect(window, C_BLACK, (0, 0, WINDOW_WIDTH, self.hud_height))
         
-        # Borda amarela inferior
-        pygame.draw.line(window, C_YELLOW, (0, self.hud_height), (WINDOW_WIDTH, self.hud_height), thickness=2)
+        # Borda amarela inferior (usando rect com width=2)
+        pygame.draw.rect(window, C_YELLOW, (0, self.hud_height - 2, WINDOW_WIDTH, 2))
         
         # Posições e espaçamento
         y_text = 12  # Posição vertical do texto

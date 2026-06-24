@@ -18,13 +18,15 @@ from code.Player import Player
 from code.Enemy import Enemy
 from code.Scenery import Scenery
 from code.Database import Database
+from code.Graphics import Graphics
 
 
 class Game:
     def __init__(self, window, sound_manager, difficulty):
         self.window = window
         self.sound_manager = sound_manager
-        self.clock = pygame.time.Clock()
+        self.clock = pygame.time.Clock()       
+        self.graphics = Graphics()
 
         # Dificuldade: achar o índice pelo nome
         diff_index = 1
@@ -368,29 +370,12 @@ class Game:
                 pygame.draw.rect(self.window, lane_color, (x, 0, 4, WINDOW_HEIGHT))
 
     def draw_hud(self):
-        hud_lines = [
-            f"SCORE: {self.score}",
-            f"VIDAS: {self.lives}",
-            f"NIVEL: {self.level}",
-            f"VEL:   {self.player.get_speed()}",
-            f"DESV:  {self.dodged}/{self.dodge_target}",
-        ]
-        y = 10
-        for line in hud_lines:
-            text = self.font_hud.render(line, True, C_WHITE)
-            self.window.blit(text, (10, y))
-            y += 22
-
-        diff_text = self.font_hud.render(self.difficulty_name, True, C_YELLOW)
-        diff_rect = diff_text.get_rect(topright=(WINDOW_WIDTH - 10, 10))
-        self.window.blit(diff_text, diff_rect)
-
-        biome_name = self.current_biome['name']
-        if self.transitioning and self.next_biome:
-            biome_name = f"{self.current_biome['name']} > {self.next_biome['name']}"
-        biome_text = self.font_hud.render(biome_name, True, C_WHITE)
-        biome_rect = biome_text.get_rect(bottomright=(WINDOW_WIDTH - 10, WINDOW_HEIGHT - 10))
-        self.window.blit(biome_text, biome_rect)
+        self.graphics.draw_hud(
+        self.window, self.player, self.level, self.dodged,
+        self.dodge_target, self.score, self.lives,
+        self.difficulty_name, self.current_biome,
+        self.next_biome, self.transitioning
+    )
 
     def draw_name_input(self):
         """Desenha a tela de input do nome do jogador."""
