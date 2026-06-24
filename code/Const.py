@@ -42,6 +42,10 @@ ENEMY_SPAWN_INTERVAL = 50  # Spawn mais frequente (era 90)
 ENEMY_CAR_FILES = [
     'enemy_car1.png',
     'enemy_car2.png',
+    'enemy_car3.png',
+    'enemy_car4.png',
+    'enemy_car5.png',
+    'enemy_car6.png',
 ]
 
 # ============================================================

@@ -1,8 +1,3 @@
-"""
-Graphics.py - Sistema de Renderização do Jogo Enduro 2D
-Copie este arquivo para a pasta 'code/' do seu projeto
-Renomeie para 'Graphics.py' (sem o '_Corrigido_v2')
-"""
 
 import pygame
 from code.Const import (
@@ -16,8 +11,8 @@ class Graphics:
     
     def __init__(self):
         """Inicializa o sistema de gráficos."""
-        self.font_hud = pygame.font.SysFont("Lucida Sans Typewriter", 18, bold=True)
-        self.font_hud_small = pygame.font.SysFont("Lucida Sans Typewriter", 14)
+        self.font_hud = pygame.font.SysFont("Lucida Sans Typewriter", 16, bold=True)
+        self.font_hud_small = pygame.font.SysFont("Lucida Sans Typewriter", 12)
         self.hud_height = 50  # Altura da barra HUD superior
         
     def draw_hud(self, window, player, level, dodged, dodge_target, score, lives, 
@@ -48,7 +43,7 @@ class Graphics:
         # Posições e espaçamento
         y_text = 12  # Posição vertical do texto
         x_start = 15  # Posição inicial horizontal
-        spacing = 180  # Espaço entre cada informação
+        spacing = 140  # Espaço entre cada informação
         
         # 1. SCORE (Amarelo)
         score_text = self.font_hud.render(f"SCORE: {score}", True, C_YELLOW)

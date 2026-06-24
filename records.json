@@ -28,6 +28,13 @@
     "date": "24/06/2026 05:13"
   },
   {
+    "name": "MICHAEL",
+    "score": 1140,
+    "level": 7,
+    "difficulty": "Fácil",
+    "date": "24/06/2026 05:19"
+  },
+  {
     "name": "Jogador",
     "score": 1080,
     "level": 6,
@@ -57,16 +64,9 @@
   },
   {
     "name": "JOHN",
-    "score": 870,
-    "level": 5,
-    "difficulty": "Normal",
-    "date": "22/06/2026 18:55"
-  },
-  {
-    "name": "Jogador",
-    "score": 855,
-    "level": 5,
-    "difficulty": "Normal",
-    "date": "22/06/2026 18:47"
+    "score": 950,
+    "level": 4,
+    "difficulty": "Difícil",
+    "date": "24/06/2026 05:19"
   }
 ]
